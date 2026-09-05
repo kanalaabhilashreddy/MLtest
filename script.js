@@ -15,7 +15,7 @@ function switchGame(index) {
         const avatar = document.getElementById('avatar-node');
         const g1ScoreOut = document.getElementById('g1-score');
         const g1TimerOut = document.getElementById('g1-timer');
-        let g1Score = 0, g1TimeLeft = 60, g1Active = false, avX = 0, g1Clock, g1Spawner;
+        let g1Score = 0, g1TimeLeft = 75, g1Active = false, avX = 0, g1Clock, g1Spawner;
 
         const posPool = ['Focus', 'Calm', 'Process', 'Execute', 'Reset', 'Flow'];
         const negPool = ['Anxiety', 'Fear', 'Doubt', 'Choke', 'Pressure', 'Distract'];
@@ -31,13 +31,13 @@ function switchGame(index) {
         frame.addEventListener('touchmove', (e) => {
             if(!g1Active) return;
             const r = frame.getBoundingClientRect();
-            let x = e.touches.clientX - r.left - 35;
+            let x = e.touches[0].clientX - r.left - 35;
             if(x < 0) x = 0; if(x > r.width - 70) x = r.width - 70;
             avatar.style.left = x + 'px'; avX = x;
         });
 
         function startG1() {
-            g1Score = 0; g1TimeLeft = 60; g1Active = true;
+            g1Score = 0; g1TimeLeft = 75; g1Active = true;
             g1ScoreOut.textContent = g1Score; g1TimerOut.textContent = g1TimeLeft;
             document.getElementById('g1-overlay').classList.add('hidden');
             document.getElementById('g1-end').classList.add('hidden');
@@ -160,3 +160,89 @@ function switchGame(index) {
                 }
             }
         }
+
+
+/* ---------- Premium V2 polish ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+    // Add a subtle active-state treatment to navigation as sections enter view.
+    const links = [...document.querySelectorAll("header nav a[href^='#']")];
+    const targets = links
+        .map(link => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+    if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    links.forEach(link => link.classList.remove("nav-current"));
+                    const active = links.find(link => link.getAttribute("href") === "#" + entry.target.id);
+                    if (active) active.classList.add("nav-current");
+                }
+            });
+        }, { rootMargin: "-35% 0px -55% 0px" });
+        targets.forEach(target => io.observe(target));
+    }
+
+    // Make dynamically generated Schulte cells keyboard-friendly.
+    const observer = new MutationObserver(() => {
+        document.querySelectorAll(".matrix-cell").forEach(cell => {
+            if (cell.tagName !== "BUTTON") {
+                cell.setAttribute("tabindex", "0");
+                cell.setAttribute("role", "button");
+            }
+        });
+    });
+    const matrix = document.getElementById("schulte-container");
+    if (matrix) observer.observe(matrix, { childList: true });
+
+    // Add a gentle parallax only on capable pointer devices.
+    if (window.matchMedia("(pointer:fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const hero = document.querySelector(".hero");
+        window.addEventListener("scroll", () => {
+            if (!hero) return;
+            const y = Math.min(window.scrollY * 0.08, 55);
+            hero.style.backgroundPosition = `center calc(50% + ${y}px)`;
+        }, { passive: true });
+    }
+});
+
+
+/* ============================================================
+   INSIDE THE WORK — accordion + progress pulse
+   ============================================================ */
+(function initInsideWork(){
+    const section = document.querySelector('#inside-work');
+    if (!section) return;
+
+    const steps = [...section.querySelectorAll('.work-step')];
+    const progress = section.querySelector('.work-progress span');
+
+    function updateProgress(){
+        if (!progress) return;
+        const active = steps.findIndex(step => step.classList.contains('is-active'));
+        const ratio = steps.length > 1 ? Math.max(0, active) / (steps.length - 1) : 0;
+        progress.style.height = `${Math.min(100, ratio * 100)}%`;
+    }
+
+    steps.forEach(step => {
+        const trigger = step.querySelector('.work-step-trigger');
+        if (!trigger) return;
+
+        trigger.addEventListener('click', () => {
+            const wasActive = step.classList.contains('is-active');
+
+            steps.forEach(item => {
+                item.classList.remove('is-active');
+                item.querySelector('.work-step-trigger')?.setAttribute('aria-expanded', 'false');
+            });
+
+            if (!wasActive) {
+                step.classList.add('is-active');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+            updateProgress();
+        });
+    });
+
+    updateProgress();
+})();
